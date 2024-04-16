@@ -1,0 +1,43 @@
+name: "Create repository Variables to a specific secondary repository"
+description: "Create repository variables to a specific secondary repository"
+author: "Avinash"
+inputs:
+  variable_name:
+    description: "Variable name that needs to be create on a repo - it must have permission to create a variable for the specified repository"
+    required: true
+  variable_value:
+    description: "Variable value that needs to be create on a repo"
+    required: true
+  environment:
+    description: "Environment where the variable to be create. Ex: dev, non-prod, prod etc"
+    required: true
+  organization:
+    description: "Comma separated list of repo names to create a environment"
+    required: true
+  repository:
+    description: "Comma separated list of repo names to create a environment"
+    required: true    
+runs:
+  using: "composite"
+  steps:
+    - name: 'Check out repository'
+      uses: actions/checkout@v4
+    - name: Create Variables
+      shell: bash
+      run: |
+        gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/"${{inputs.organization}}"/"${{inputs.repository}}"/environments/"${{inputs.environment}}"/variables \
+          -f name="${{inputs.variable_name}}" \
+          -f value="${{inputs.variable_value}}" 
+
+    - name: Validate Variables
+      shell: bash
+      run: |
+        gh api \
+          --method GET  \
+          --header 'Accept: application/vnd.github+json' \
+          --header 'X-GitHub-Api-Version:2022-11-28' \
+          /repos/"${{inputs.organization}}"/"${{inputs.repository}}"/environments/"${{inputs.environment}}"/variables
